@@ -54,6 +54,7 @@ jobs:
 
     - name: Build application
       run: |
+        export GH_TOKEN=${{ secrets.GH_TOKEN }}
         npm run build
 
     - name: Create Release
