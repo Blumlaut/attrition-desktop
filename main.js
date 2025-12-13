@@ -121,6 +121,92 @@ function createMainWindow() {
   
   mainWindow.webContents.on('dom-ready', () => {
     console.log('Main window DOM ready');
+    
+    // Inject content script to handle _blank links
+    const contentScript = `
+      (() => {
+        'use strict';
+        
+        /**
+         * Handles click events on anchor tags with target="_blank"
+         * @param {Event} event - The click event
+         */
+        const handleLinkClick = (event) => {
+          const link = event.target;
+          
+          // Check if this is an anchor tag with target="_blank"
+          if (link.tagName === 'A' && link.target === '_blank') {
+            // Prevent the default behavior (opening in new tab)
+            event.preventDefault();
+            
+            // Get the href attribute
+            const url = link.href;
+            
+            // Send message to main process to handle navigation
+            if (window.electron) {
+              window.electron.ipcRenderer.invoke('link-clicked', url);
+            } else {
+              // Fallback: try to navigate in same window
+              window.location.href = url;
+            }
+          }
+        };
+        
+        /**
+         * Sets up link interception for both existing and dynamically added links
+         */
+        const setupLinkInterception = () => {
+          // Listen for clicks on the document
+          document.addEventListener('click', handleLinkClick, true);
+          
+          // Also listen for link creation (for dynamically added links)
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                  if (node.nodeType === 1) { // Element node
+                    // Check if it's an anchor tag or contains anchor tags
+                    if (node.tagName === 'A' && node.target === '_blank') {
+                      node.addEventListener('click', handleLinkClick, true);
+                    } else {
+                      // Look for anchor tags within the added node
+                      const anchors = node.querySelectorAll('a[target="_blank"]');
+                      anchors.forEach(anchor => {
+                        anchor.addEventListener('click', handleLinkClick, true);
+                      });
+                    }
+                  }
+                });
+              }
+            });
+          });
+          
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+        };
+        
+        // Run when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupLinkInterception);
+        } else {
+          setupLinkInterception();
+        }
+        
+        // Also set up for any future dynamically added links
+        window.addEventListener('load', () => {
+          setupLinkInterception();
+        });
+      })();
+    `;
+    
+    try {
+      mainWindow.webContents.executeJavaScript(contentScript);
+      console.log('Content script injected successfully');
+    } catch (error) {
+      console.error('Error injecting content script:', error);
+    }
   });
 
   // Handle window close events - ask user if they want to minimize to tray or quit
@@ -354,6 +440,29 @@ function initializeApp() {
   ipcMain.handle('save-minimize-to-tray-preference', async (event, shouldMinimize) => {
     console.log('IPC save-minimize-to-tray-preference called with:', shouldMinimize);
     return saveMinimizeToTrayPreference(shouldMinimize);
+  });
+
+  // Handle link clicked events - always open in same window
+  ipcMain.handle('link-clicked', async (event, url) => {
+    console.log('IPC link-clicked called with URL:', url);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      try {
+        mainWindow.loadURL(url);
+        return { success: true, message: 'Link loaded in same window' };
+      } catch (error) {
+        console.error('Error loading URL in main window:', error);
+        return { 
+          success: false, 
+          message: `Failed to load URL: ${error.message}` 
+        };
+      }
+    } else {
+      console.error('Main window not available for link navigation');
+      return { 
+        success: false, 
+        message: 'Main window not available' 
+      };
+    }
   });
 
   // Handle livery download and extraction with authentication using native fetch
