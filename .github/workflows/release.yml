@@ -69,11 +69,12 @@ jobs:
           git push origin HEAD:${{ github.ref_name }}
 
       - name: Build application
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}   # <— important: needed by electron-builder
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           npm run build
-        # npm run build == electron-builder -w -l && mv dist/*.exe dist/attrition-desktop.exe && mv dist/*AppImage* dist/attrition-desktop.appimage
 
       - name: List built files
         run: ls -la dist
@@ -81,7 +82,7 @@ jobs:
       - name: Create release and upload assets
         uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           tag_name: v${{ steps.increment_version.outputs.new_version }}
           name: Release v${{ steps.increment_version.outputs.new_version }}
