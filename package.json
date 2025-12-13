@@ -1,0 +1,54 @@
+{
+  "name": "attrition-desktop",
+  "version": "0.1.0",
+  "main": "main.js",
+  "license": "MIT",
+  "author": "blumlaut",
+  "description": "Attrition Desktop Application",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "builder": "electron-builder --help",
+    "build:win": "electron-builder --win && mv dist/*.exe dist/attrition-desktop.exe",
+    "build:linux": "electron-builder --linux && mv dist/*AppImage* dist/attrition-desktop.appimage",
+    "build": "electron-builder -w -l && mv dist/*.exe dist/attrition-desktop.exe && mv dist/*AppImage* dist/attrition-desktop.appimage"
+  },
+  "build": {
+    "appId": "com.attrition.desktop",
+    "productName": "Attrition Desktop",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.js",
+      "preload.js",
+      "index.html",
+      "config.html",
+      "configHelpers.js"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "artifactName": "${productName}-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "engines": {
+    "node": ">=12.20.55"
+  }
+}
