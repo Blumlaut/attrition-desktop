@@ -52,7 +52,8 @@ jobs:
 
     - name: Build application
       run: |
-        npm run build
+        sudo apt-get update && sudo apt-get install -y wine
+        npm run build:linux && npm run build:win
 
     - name: Create Release
       id: create_release
@@ -90,17 +91,6 @@ jobs:
         asset_name: attrition-desktop-linux.appimage
         asset_content_type: application/octet-stream
       if: hashFiles('./dist/*AppImage*') != ''
-
-    - name: Upload macOS Build
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/*.dmg
-        asset_name: attrition-desktop-macos.dmg
-        asset_content_type: application/octet-stream
-      if: hashFiles('./dist/*.dmg') != ''
 
     - name: List built files
       run: |
