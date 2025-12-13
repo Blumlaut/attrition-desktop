@@ -25,14 +25,7 @@ jobs:
           wine \
           wine32:i386 \
           xvfb \
-          libwine-dev \
-          libwine1:i386 \
-          libwine1 \
-          libwine-common \
-          winbind \
-          wine-cleanup \
-          libwine-1.0 \
-          libwine-1.0:i386
+          winbind
         npm ci
 
     - name: Get current version
@@ -67,6 +60,8 @@ jobs:
     - name: Build application
       run: |
         export GH_TOKEN=${{ secrets.GH_TOKEN }}
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         npm run build
 
     - name: Create Release
