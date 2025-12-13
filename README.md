@@ -1,19 +1,18 @@
 # Attrition Desktop Application
 
-A desktop application for managing Attrition web content with integrated livery download functionality.
+A desktop client for the Attrition simracing league orchestration platform for Assetto Corsa Competizione.
 
 ## Overview
 
-Attrition Desktop is a cross-platform desktop application built with Electron that provides a native interface for accessing and managing Attrition. The application allows users to configure their preferred Attrition URL, manage Assetto Corsa Competizione liveries, and provides a system tray integration for convenient access.
+Attrition is a simracing league orchestration platform designed for Assetto Corsa Competizione. This desktop application provides a native interface for accessing and managing Attrition by wrapping it in an Electron window. The client offers basic tools for league management and asset handling, including livery installation functionality.
 
 ## Features
 
-- **Web Content Access**: Displays configured Attrition web content in a desktop window
-- **Configuration Management**: Easy configuration of web URLs and documents folders
-- **System Tray Integration**: Minimize to tray functionality with double-click restore
-- **Livery Download**: Download and extract liveries directly from the web application
+- **League Platform Access**: Native desktop interface for the Attrition simracing league platform
+- **Assetto Corsa Competizione Integration**: Seamless integration with ACC game files and directories
+- **Livery Installation**: Download and install race liveries directly from the platform
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
-- **Auto-Detection**: Automatically detects Assetto Corsa Competizione documents folders
+- **Server Hosted Platform**: Designed to work with server-hosted Attrition instances
 
 ## Installation
 
@@ -47,22 +46,22 @@ npm run build
 
 1. Launch the application
 2. The configuration window will automatically appear
-3. Enter your Attrition URL (default: `https://blancpaw-gt.uk`)
+3. Enter your Attrition server URL (default: `https://blancpaw-gt.uk`)
 4. Select your Assetto Corsa Competizione Documents folder
 5. Save the configuration
 
 ### Daily Usage
 
-- **Main Window**: Displays your configured Attrition content
+- **Main Window**: Displays Attrition
 - **System Tray**: Right-click the tray icon to show/hide the application or exit
 - **Minimize Behavior**: Configure whether to minimize to tray or close completely
 
-### Livery Download
+### Livery Installation
 
-1. In the main window, use the livery download functionality
+1. In the main window, use the livery installation functionality
 2. Specify event ID and base URL
 3. The application will automatically detect your ACC documents folder
-4. Downloaded liveries are extracted directly to the Customs folder
+4. Installed liveries are extracted directly to the Customs folder
 
 ## Project Structure
 
@@ -80,10 +79,10 @@ attrition-desktop/
 
 ## Technologies Used
 
-- **Electron**: Cross-platform desktop application framework
+- **Electron**: Cross-platform desktop application framework for wrapping the web platform
 - **Node.js**: Backend runtime environment
 - **JavaScript/HTML/CSS**: Frontend interface
-- **unzipper**: ZIP file extraction library
+- **unzipper**: ZIP file extraction library for livery installation
 - **electron-builder**: Application packaging and distribution
 
 ## Configuration
@@ -94,7 +93,7 @@ Configuration is stored in the application's user data directory:
 - **Linux**: `~/.config/attrition-desktop/config.json`
 
 The configuration file contains:
-- Saved URL for the Attrition web application
+- Saved URL for the Attrition server instance
 - Documents folder path for Assetto Corsa Competizione
 - Minimize to tray preference
 
