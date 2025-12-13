@@ -24,6 +24,9 @@ const {
   saveMinimizeToTrayPreference
 } = require('./configHelpers');
 
+// Get current app version from package.json
+const packageVersion = require('./package.json').version;
+
 let mainWindow;
 let configWindow;
 let tray = null;
@@ -704,5 +707,123 @@ app.on('before-quit', () => {
   console.log('App is about to quit, cleaning up...');
   app.isQuiting = true;
 });
+
+// Version checking function
+const checkForUpdates = async () => {
+  try {
+    console.log('Checking for updates...');
+    
+    // Fetch latest releases from GitHub API
+    const response = await fetch('https://api.github.com/repos/blumlaut/attrition-desktop/releases');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const releases = await response.json();
+    
+    if (!releases || releases.length === 0) {
+      throw new Error('No releases found');
+    }
+    
+    // Find the latest non-prerelease release
+    const latestRelease = releases.find(release => !release.prerelease);
+    
+    if (!latestRelease) {
+      throw new Error('No stable releases found');
+    }
+    
+    // Extract version from tag_name (e.g., "v0.1.2" -> "0.1.2")
+    const latestVersion = latestRelease.tag_name.replace(/^v/, '');
+    
+    // Compare versions
+    const isUpdateAvailable = compareVersions(packageVersion, latestVersion) > 0;
+    
+    console.log(`Current version: ${packageVersion}, Latest version: ${latestVersion}, Update available: ${isUpdateAvailable}`);
+    
+    return {
+      currentVersion: packageVersion,
+      latestVersion: latestVersion,
+      isUpdateAvailable: isUpdateAvailable,
+      releaseInfo: latestRelease
+    };
+  } catch (error) {
+    console.error('Error checking for updates:', error);
+    return {
+      currentVersion: packageVersion,
+      latestVersion: null,
+      isUpdateAvailable: false,
+      error: error.message
+    };
+  }
+};
+
+// Simple version comparison function
+const compareVersions = (version1, version2) => {
+  const v1Parts = version1.split('.').map(Number);
+  const v2Parts = version2.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+    const part1 = v1Parts[i] || 0;
+    const part2 = v2Parts[i] || 0;
+    
+    if (part1 > part2) return 1;
+    if (part1 < part2) return -1;
+  }
+  
+  return 0;
+};
+
+// Add IPC handler for version checking
+ipcMain.handle('check-for-updates', async () => {
+  console.log('IPC check-for-updates called');
+  return await checkForUpdates();
+});
+
+// Auto-check for updates when app starts (with delay to ensure UI is ready)
+setTimeout(() => {
+  const showUpdateNotification = async () => {
+    try {
+      const updateResult = await checkForUpdates();
+      
+      // Only show notification if there's an error or if update is available
+      if (updateResult.error) {
+        console.log('Update check failed:', updateResult.error);
+        return;
+      }
+      
+      // Fix the version comparison logic - we want to detect if latestVersion > currentVersion
+      const versionComparison = compareVersions(updateResult.latestVersion, updateResult.currentVersion);
+      const isUpdateAvailable = versionComparison > 0;
+      
+      if (isUpdateAvailable) {
+        console.log(`Update available! Current: ${updateResult.currentVersion}, Latest: ${updateResult.latestVersion}`);
+        
+        // Show notification using dialog
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const response = await dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            title: 'Update Available',
+            message: `A new version of Attrition Desktop is available!`,
+            detail: `Current version: ${updateResult.currentVersion}\nLatest version: ${updateResult.latestVersion}\n\nVisit blancpaw-gt.uk to download the latest version.`,
+            buttons: ['Download Now', 'Later'],
+            defaultId: 0,
+            cancelId: 1
+          });
+          
+          if (response.response === 0) {
+            // Open website in browser - move shell import to top level for scope
+            const { shell } = require('electron');
+            shell.openExternal('https://blancpaw-gt.uk');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in auto-update check:', error);
+    }
+  };
+  
+  showUpdateNotification();
+}, 3000);
 
 console.log('Main process script loaded successfully');
