@@ -5,102 +5,95 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: |
-        sudo dpkg --add-architecture i386
-        sudo apt-get update && sudo apt-get install -y \
-          wine \
-          wine32:i386 \
-          xvfb \
-          winbind
-        npm ci
+      - name: Install dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update && sudo apt-get install -y \
+            wine \
+            wine32:i386 \
+            xvfb \
+            winbind
+          npm ci
 
-    - name: Get current version
-      id: get_version
-      run: |
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-        echo "Current version is: $CURRENT_VERSION"
+      - name: Get current version
+        id: get_version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version is: $CURRENT_VERSION"
 
-    - name: Increment version by 0.0.1
-      id: increment_version
-      run: |
-        CURRENT_VERSION=${{ steps.get_version.outputs.current_version }}
-        # Split version into parts
-        IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-        MAJOR="${VERSION_PARTS[0]}"
-        MINOR="${VERSION_PARTS[1]}"
-        PATCH="${VERSION_PARTS[2]}"
-        
-        # Increment patch version
-        NEW_PATCH=$((PATCH + 1))
-        NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-        
-        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        echo "Incremented version from $CURRENT_VERSION to $NEW_VERSION"
+      - name: Increment version by 0.0.1
+        id: increment_version
+        run: |
+          CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
 
-    - name: Update package.json with new version
-      run: |
-        npm version ${{ steps.increment_version.outputs.new_version }} --no-git-tag-version
-        echo "Updated package.json to version ${{ steps.increment_version.outputs.new_version }}"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
 
-    - name: Build application
-      run: |
-        export GH_TOKEN=${{ secrets.GH_TOKEN }}
-        export DISPLAY=:99
-        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        npm run build
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Incremented version from $CURRENT_VERSION to $NEW_VERSION"
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      with:
-        tag_name: v${{ steps.increment_version.outputs.new_version }}
-        release_name: Release v${{ steps.increment_version.outputs.new_version }}
-        body: |
-          Release notes for v${{ steps.increment_version.outputs.new_version }}
-          
-          - Built application files attached
-        draft: false
-        prerelease: false
+      - name: Update package.json with new version
+        run: |
+          npm version ${{ steps.increment_version.outputs.new_version }} --no-git-tag-version
+          echo "Updated package.json to version ${{ steps.increment_version.outputs.new_version }}"
 
-    - name: Upload Windows Build
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/*.exe
-        asset_name: attrition-desktop-windows.exe
-        asset_content_type: application/octet-stream
-      if: hashFiles('./dist/*.exe') != ''
+      - name: Build application
+        run: |
+          export GH_TOKEN=${{ secrets.GH_TOKEN }}
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          npm run build
 
-    - name: Upload Linux Build
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/*AppImage*
-        asset_name: attrition-desktop-linux.appimage
-        asset_content_type: application/octet-stream
-      if: hashFiles('./dist/*AppImage*') != ''
+      - name: Normalize artifact names
+        run: |
+          # Windows
+          if compgen -G "dist/*.exe" > /dev/null; then
+            WIN_FILE=$(ls dist/*.exe | head -n 1)
+            mv "$WIN_FILE" dist/attrition-desktop-windows.exe
+          fi
 
-    - name: List built files
-      run: |
-        ls -la ./dist/
+          # Linux AppImage
+          if compgen -G "dist/*AppImage*" > /dev/null; then
+            LINUX_FILE=$(ls dist/*AppImage* | head -n 1)
+            mv "$LINUX_FILE" dist/attrition-desktop-linux.appimage
+          fi
+
+      - name: Create release and upload assets
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: v${{ steps.increment_version.outputs.new_version }}
+          name: Release v${{ steps.increment_version.outputs.new_version }}
+          body: |
+            Release notes for v${{ steps.increment_version.outputs.new_version }}
+
+            - Built application files attached
+          files: |
+            dist/attrition-desktop-windows.exe
+            dist/attrition-desktop-linux.appimage
+          fail_on_unmatched_files: false
+          draft: false
+          prerelease: false
+
+      - name: List built files
+        run: |
+          ls -la ./dist/
