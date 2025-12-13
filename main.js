@@ -33,23 +33,12 @@ let tray = null;
 
 // Create the system tray icon
 function createTray() {
-  // Create a simple icon (you can use a more sophisticated approach with actual icons)
-  const iconPath = path.join(__dirname, 'icon.png');
-  
-  // Try to use a default icon if custom one doesn't exist
-  try {
-    if (fs.existsSync(iconPath)) {
-      tray = new Tray(iconPath);
-    } else {
-      // Create a simple tray icon using nativeImage
-      const image = nativeImage.createEmpty();
-      tray = new Tray(image);
-    }
-  } catch (error) {
-    console.error('Error creating tray icon:', error);
-    // Fallback to empty tray icon
-    tray = new Tray(nativeImage.createEmpty());
-  }
+  const trayIcon = path.join(
+    process.resourcesPath,
+    "app.asar.unpacked",
+    "icon.png"
+  );
+  tray = new Tray(trayIcon);
 
   const contextMenu = Menu.buildFromTemplate([
     {

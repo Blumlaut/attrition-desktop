@@ -21,11 +21,15 @@
     },
     "files": [
       "main.js",
+      "icon.png",
       "index.js",
       "preload.js",
       "index.html",
       "config.html",
       "configHelpers.js"
+    ],
+    "asarUnpack": [
+      "icon.png"
     ],
     "win": {
       "target": "nsis",
