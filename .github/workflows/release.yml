@@ -20,7 +20,19 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update && sudo apt-get install -y wine
+        sudo dpkg --add-architecture i386
+        sudo apt-get update && sudo apt-get install -y \
+          wine \
+          wine32:i386 \
+          xvfb \
+          libwine-dev \
+          libwine1:i386 \
+          libwine1 \
+          libwine-common \
+          winbind \
+          wine-cleanup \
+          libwine-1.0 \
+          libwine-1.0:i386
         npm ci
 
     - name: Get current version
