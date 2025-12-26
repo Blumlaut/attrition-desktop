@@ -76,6 +76,13 @@ jobs:
           Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
           npm run build
 
+      - name: Generate changelog
+        id: generate_changelog
+        run: |
+          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0)..HEAD >> "$GITHUB_OUTPUT/changelog"
+          echo EOF >> "$GITHUB_OUTPUT"
+
       - name: List built files
         run: ls -la dist
 
@@ -90,6 +97,8 @@ jobs:
             Release notes for v${{ steps.increment_version.outputs.new_version }}
 
             - Built application files attached
+
+            ${{ steps.generate_changelog.outputs.changelog }}
           files: |
             dist/attrition-desktop.exe
             dist/attrition-desktop.appimage
