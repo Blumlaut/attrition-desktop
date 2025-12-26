@@ -734,6 +734,7 @@ const createMenu = () => {
     {
       label: 'Edit',
       submenu: [
+        { label: 'Go to Home', click: () => { if (mainWindow && !mainWindow.isDestroyed()) { const url = readSavedUrl(); mainWindow.loadURL(url); } else { createMainWindow(); } } },
         { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
         { label: 'Redo', accelerator: 'CmdOrCtrl+Y', role: 'redo' },
         { type: 'separator' },
