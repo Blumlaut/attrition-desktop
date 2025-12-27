@@ -1,8 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, session, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { pipeline } = require('stream');
-const { promisify } = require('util');
 const unzipper = require('unzipper');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
