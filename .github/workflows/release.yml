@@ -79,12 +79,13 @@ jobs:
       - name: Generate changelog
         id: generate_changelog
         run: |
-          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
           if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-            git log --pretty=format:"- %s" $(git describe --tags --abbrev=0)..HEAD >> "$GITHUB_OUTPUT"
+            CHANGELOG=$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0)..HEAD)
           else
-            git log --pretty=format:"- %s" >> "$GITHUB_OUTPUT"
+            CHANGELOG=$(git log --pretty=format:"- %s")
           fi
+          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGELOG" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: List built files
