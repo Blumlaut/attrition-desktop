@@ -88,9 +88,9 @@ function createMainWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: true,
+      enableRemoteModule: false,
       // Add preload script for better security
       preload: path.join(__dirname, 'preload.js')
     },
@@ -293,7 +293,7 @@ function createConfigWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true,
+      enableRemoteModule: false,
     },
   });
 
