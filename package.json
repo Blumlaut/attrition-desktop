@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "electron": "^40.0.0",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.15.0"
   },
   "engines": {
     "node": ">=12.20.55"
